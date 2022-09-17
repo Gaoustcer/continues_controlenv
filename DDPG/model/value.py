@@ -10,7 +10,7 @@ class valuenet(nn.Module):
             nn.Linear(2,4)
         )
         self.stateembeddingnet = nn.Sequential(
-            nn.Linear(2,4),
+            nn.Linear(4,4),
             nn.ReLU(),
             nn.Linear(4,8),
             nn.ReLU(),
@@ -35,7 +35,7 @@ class valuenet(nn.Module):
             states = torch.from_numpy(states).cuda().to(torch.float32)
         if isinstance(actions,np.ndarray):
             actions = torch.from_numpy(actions).cuda().to(torch.float32)
-        print(actions.shape,states.shape)
+        # print(actions.shape,states.shape)
         stateembedding = self.stateembeddingnet(states)
         actionembedding = self.actionembeddingnet(actions)
         embedding = torch.concat([stateembedding,actionembedding],dim=-1)

@@ -5,7 +5,7 @@ class actionnet(nn.Module):
     def __init__(self) -> None:
         super(actionnet,self).__init__()
         self.actiondecieison = nn.Sequential(
-            nn.Linear(2,4),
+            nn.Linear(4,4),
             nn.ReLU(),
             nn.Linear(4,8),
             nn.ReLU(),

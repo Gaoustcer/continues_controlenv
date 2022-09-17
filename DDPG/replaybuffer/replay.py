@@ -1,5 +1,6 @@
 from collections import namedtuple
 from random import choices
+import numpy as np
 class buffer(object):
     def __init__(self,max_size = 1024) -> None:
         self.TRANSITION = namedtuple('replaybuffer','current_state action reward next_state')
@@ -40,7 +41,7 @@ class buffer(object):
             action.append(self.memory.action[index])
             next_state.append(self.memory.next_state[index])
             reward.append(self.memory.reward[index])
-        return current_state,action,reward,next_state
+        return np.array(current_state),np.array(action),np.array(reward).astype(float),np.array(next_state)
 
 
 if __name__ == "__main__":
@@ -58,6 +59,14 @@ if __name__ == "__main__":
             memorybuffer.push_memory(cs,a,r,ns)
         if memorybuffer.full == True:
             break
+    current_state,action,reward,next_state = memorybuffer.sample(64)
+    import torch
+    current_state = torch.from_numpy(current_state)
+    actions = torch.from_numpy(action)
+    # print(current_state)
+    # print(actions.shape)
+    # print(actions)
+    exit()
     M = 128
     N = 64
     from time import time

@@ -30,7 +30,7 @@ class DDPG(object):
             state = self.testenv.reset()
             done = False
             while done == False:
-                action = self.actionnet(state)
+                action = self.actionnet(state).cpu().detach()
                 state,r,done,_ = self.testenv.step(action)
                 reward += r
         return reward/K
@@ -40,8 +40,8 @@ class DDPG(object):
             done = False
             state = self.trainenv.reset()
             while done == False:
-                action = self.actionnet(state)
-                ns,r,done,_ = self.trainenv.step()
+                action = self.actionnet(state).cpu().detach().numpy()
+                ns,r,done,_ = self.trainenv.step(action)
                 self.replay_buffer.push_memory(state,action,r,ns)
                 state = ns
     
@@ -50,9 +50,11 @@ class DDPG(object):
         '''
         update action_value net based on TDloss
         '''
+        # print("action is",action)
+        # exit()
         for _ in range(actionvalueupdatetime):
             currentactionvalue = self.valuenet(currentstate,action)
-            nextactionvalue = (self.targetvaluenet(nextstate,self.targetactionnet(nextstate)) + torch.from_numpy(reward)).detach()
+            nextactionvalue = (self.targetvaluenet(nextstate,self.targetactionnet(nextstate)) + torch.from_numpy(reward).cuda().to(torch.float32)).detach()
             loss = self.actionvaluelossfunction(currentactionvalue,nextactionvalue)
             self.actionvalueoptim.zero_grad()
             loss.backward()

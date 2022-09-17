@@ -5,6 +5,9 @@ env = gym.make('maze2d-umaze-v1')
 done = False
 state = env.reset()
 reward = 0
+EPOCH = 256
+from torch.utils.tensorboard import SummaryWriter
+writer = SummaryWriter('./log/random')
 while done == False:
     next_state,r,done,_ = env.step(env.action_space.sample())
     reward += r
