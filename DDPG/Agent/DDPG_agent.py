@@ -24,7 +24,7 @@ class DDPG(object):
             targetparam.data.copy_(
                 self.tau * originparam + (1 - self.tau) * targetparam
             )
-    def validation(self,K=4):
+    def validation(self,K=16):
         reward = 0
         for epoch in range(K):
             state = self.testenv.reset()
@@ -60,7 +60,7 @@ class DDPG(object):
             loss.backward()
             self.actionvalueoptim.step()
         for _ in range(actionupdatetime):
-            values = torch.sum(self.valuenet(currentstate,self.actionnet(currentstate)))
+            values = -torch.sum(self.valuenet(currentstate,self.actionnet(currentstate)))
             self.actionoptim.zero_grad()
             values.backward()
             self.actionoptim.step()
@@ -68,6 +68,13 @@ class DDPG(object):
     def _softupdate(self):
         self._soft_update(self.actionnet,self.targetactionnet)
         self._soft_update(self.valuenet,self.targetvaluenet)
+    
+    def _random(self):
+        from tqdm import tqdm
+        for epoch in tqdm(range(self.EPOCH)):
+            reward = self.validation()
+            self.writer.add_scalar('reward/baseline',reward,epoch)
+
     
     def train(self,sample_time=8):
         while self.replay_buffer.full == False:
