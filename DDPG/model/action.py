@@ -10,9 +10,10 @@ class actionnet(nn.Module):
             nn.Linear(4,8),
             nn.ReLU(),
             nn.Linear(8,action_size),
-            nn.Sigmoid()
+            nn.Tanh()
         )
     def forward(self,states):
         if isinstance(states,np.ndarray):
             states = torch.from_numpy(states).cuda().to(torch.float32)
-        return 2 * (self.actiondecieison(states) - 0.5)
+        return self.actiondecieison(states)
+        # return 2 * (self.actiondecieison(states) - 0.5)
