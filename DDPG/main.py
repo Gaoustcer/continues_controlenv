@@ -3,7 +3,6 @@ from model.value import valuenet
 from Agent.DDPG_agent import DDPG
 from replaybuffer.replay import buffer
 from env.contin_cartpole import ContinuousCartPoleEnv
-
 if __name__ == "__main__":
     a_net = actionnet(state_size=4,action_size=1).cuda()
     target_a_net = actionnet(state_size=4,action_size=1).cuda()

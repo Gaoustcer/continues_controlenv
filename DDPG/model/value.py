@@ -14,15 +14,9 @@ class valuenet(nn.Module):
             nn.ReLU(),
             nn.Linear(4,8),
             nn.ReLU(),
-            nn.Linear(8,16),
-            nn.ReLU(),
-            nn.Linear(16,4)
+            nn.Linear(8,4)
         )
         self.valuenet = nn.Sequential(
-            nn.Linear(8,16),
-            nn.ReLU(),
-            nn.Linear(16,8),
-            nn.ReLU(),
             nn.Linear(8,4),
             nn.ReLU(),
             nn.Linear(4,2),

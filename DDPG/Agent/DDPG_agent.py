@@ -15,10 +15,11 @@ class DDPG(object):
         self.testenv = make_env()
         self.writer = SummaryWriter(logdir)
         self.tau = 0.2
+        self.gamma = 0.9
         self.EPOCH = 256
         self.actionvaluelossfunction = nn.MSELoss()
-        self.actionvalueoptim = torch.optim.Adam(self.valuenet.parameters(),lr = 0.0001)
-        self.actionoptim = torch.optim.Adam(self.actionnet.parameters(),lr=0.0001)
+        self.actionvalueoptim = torch.optim.Adam(self.valuenet.parameters(),lr = 0.001)
+        self.actionoptim = torch.optim.Adam(self.actionnet.parameters(),lr=0.001)
         self.lossindex = 1
         self.valueindex = 1
     def _soft_update(self,origin_net:nn.Module,target_net:nn.Module):
@@ -55,8 +56,13 @@ class DDPG(object):
         # print("action is",action)
         # exit()
         for _ in range(actionvalueupdatetime):
-            currentactionvalue = self.valuenet(currentstate,action)
-            nextactionvalue = (self.targetvaluenet(nextstate,self.targetactionnet(nextstate)) + torch.from_numpy(reward).cuda().to(torch.float32)).detach()
+            currentactionvalue = self.valuenet(currentstate,action).squeeze()
+            nextactionvalue = (self.gamma * self.targetvaluenet(nextstate,self.targetactionnet(nextstate)).squeeze() + torch.from_numpy(reward).cuda().to(torch.float32)).detach()
+            # print("current value is",currentactionvalue)
+            # print("self.targetvalue",self.targetvaluenet(nextstate,self.targetactionnet(nextstate)).squeeze())
+            # print("next action is ",nextactionvalue)
+            # print("judge is",torch.from_numpy(reward))
+            # exit()
             loss = self.actionvaluelossfunction(currentactionvalue,nextactionvalue)
             self.actionvalueoptim.zero_grad()
             loss.backward()
@@ -64,8 +70,10 @@ class DDPG(object):
             self.lossindex += 1
             self.actionvalueoptim.step()
         for _ in range(actionupdatetime):
-            values = -torch.sum(self.valuenet(currentstate,self.actionnet(currentstate)))
+            values = -torch.mean(self.valuenet(currentstate,self.actionnet(currentstate)))
             self.actionoptim.zero_grad()
+            # print("values is",values)
+            # exit()
             values.backward()
             self.writer.add_scalar('value',-values,self.valueindex)
             self.valueindex += 1
@@ -77,10 +85,10 @@ class DDPG(object):
     
     def _random(self):
         from tqdm import tqdm
-        self.baselinewriter = SummaryWriter("baseline")
+        self.baselinewriter = SummaryWriter("../log/baseline")
         for epoch in tqdm(range(self.EPOCH)):
             reward = self.validation()
-            self.writer.add_scalar('reward',reward,epoch)
+            self.baselinewriter.add_scalar('reward',reward,epoch)
 
     
     def train(self,sample_time=8):
