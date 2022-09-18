@@ -17,8 +17,10 @@ class DDPG(object):
         self.tau = 0.2
         self.EPOCH = 256
         self.actionvaluelossfunction = nn.MSELoss()
-        self.actionvalueoptim = torch.optim.Adam(self.valuenet.parameters(),lr = 0.001)
-        self.actionoptim = torch.optim.Adam(self.actionnet.parameters(),lr=0.001)
+        self.actionvalueoptim = torch.optim.Adam(self.valuenet.parameters(),lr = 0.0001)
+        self.actionoptim = torch.optim.Adam(self.actionnet.parameters(),lr=0.0001)
+        self.lossindex = 1
+        self.valueindex = 1
     def _soft_update(self,origin_net:nn.Module,target_net:nn.Module):
         for targetparam,originparam in zip(target_net.parameters(),origin_net.parameters()):
             targetparam.data.copy_(
@@ -30,7 +32,7 @@ class DDPG(object):
             state = self.testenv.reset()
             done = False
             while done == False:
-                action = self.actionnet(state).cpu().detach()
+                action = self.actionnet(state).cpu().detach().numpy()
                 state,r,done,_ = self.testenv.step(action)
                 reward += r
         return reward/K
@@ -45,7 +47,7 @@ class DDPG(object):
                 self.replay_buffer.push_memory(state,action,r,ns)
                 state = ns
     
-    def updateparameters(self,sample_size = 64,actionvalueupdatetime=4,actionupdatetime=4):
+    def updateparameters(self,sample_size = 64,actionvalueupdatetime=16,actionupdatetime=4):
         currentstate,action,reward,nextstate = self.replay_buffer.sample(sample_size)
         '''
         update action_value net based on TDloss
@@ -58,11 +60,15 @@ class DDPG(object):
             loss = self.actionvaluelossfunction(currentactionvalue,nextactionvalue)
             self.actionvalueoptim.zero_grad()
             loss.backward()
+            self.writer.add_scalar('TDloss',loss,self.lossindex)
+            self.lossindex += 1
             self.actionvalueoptim.step()
         for _ in range(actionupdatetime):
             values = -torch.sum(self.valuenet(currentstate,self.actionnet(currentstate)))
             self.actionoptim.zero_grad()
             values.backward()
+            self.writer.add_scalar('value',-values,self.valueindex)
+            self.valueindex += 1
             self.actionoptim.step()
     
     def _softupdate(self):
@@ -71,9 +77,10 @@ class DDPG(object):
     
     def _random(self):
         from tqdm import tqdm
+        self.baselinewriter = SummaryWriter("baseline")
         for epoch in tqdm(range(self.EPOCH)):
             reward = self.validation()
-            self.writer.add_scalar('reward/baseline',reward,epoch)
+            self.writer.add_scalar('reward',reward,epoch)
 
     
     def train(self,sample_time=8):
@@ -86,6 +93,7 @@ class DDPG(object):
                 self.updateparameters()
             reward = self.validation()
             self.writer.add_scalar('reward',reward,epoch)
+            self._softupdate()
     
     
         

@@ -2,14 +2,14 @@ import torch.nn as nn
 import numpy as np
 import torch
 class actionnet(nn.Module):
-    def __init__(self) -> None:
+    def __init__(self,state_size = 4,action_size = 2) -> None:
         super(actionnet,self).__init__()
         self.actiondecieison = nn.Sequential(
-            nn.Linear(4,4),
+            nn.Linear(state_size,4),
             nn.ReLU(),
             nn.Linear(4,8),
             nn.ReLU(),
-            nn.Linear(8,2),
+            nn.Linear(8,action_size),
             nn.Sigmoid()
         )
     def forward(self,states):

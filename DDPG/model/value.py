@@ -2,15 +2,15 @@ import torch.nn as nn
 import numpy as np
 import torch
 class valuenet(nn.Module):
-    def __init__(self) -> None:
+    def __init__(self,state_size = 4,action_size = 2) -> None:
         super(valuenet,self).__init__()
         self.actionembeddingnet = nn.Sequential(
-            nn.Linear(2,2),
+            nn.Linear(action_size,2),
             nn.ReLU(),
             nn.Linear(2,4)
         )
         self.stateembeddingnet = nn.Sequential(
-            nn.Linear(4,4),
+            nn.Linear(state_size,4),
             nn.ReLU(),
             nn.Linear(4,8),
             nn.ReLU(),
