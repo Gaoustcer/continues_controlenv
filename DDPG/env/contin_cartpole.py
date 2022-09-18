@@ -76,8 +76,8 @@ class ContinuousCartPoleEnv(gym.Env):
 
     
     def step(self, action):
-        assert self.action_space.contains(action), \
-            "%r (%s) invalid" % (action, type(action))
+        # assert self.action_space.contains(action), \
+            # "%r (%s) invalid" % (action, type(action))
         # Cast action to float to strip np trappings
         force = self.force_mag * float(action)
         self.state = self.stepPhysics(force)
@@ -168,3 +168,10 @@ if __name__ == "__main__":
     print(env.observation_space)
     print(env.action_space.sample())
     print(env.reset())
+    print("action type",type(env.action_space.sample()))
+    print("dtype is",env.action_space.sample().dtype)
+    # action = np.array(0.01).astype(env.action_space.sample().dtype)
+    action = np.random.random(1)
+    # action.dtype = np.float32
+
+    print(env.step(action))

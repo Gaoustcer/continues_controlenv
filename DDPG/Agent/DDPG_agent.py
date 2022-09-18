@@ -14,12 +14,12 @@ class DDPG(object):
         self.trainenv = make_env()
         self.testenv = make_env()
         self.writer = SummaryWriter(logdir)
-        self.tau = 0.2
+        self.tau = 0.1
         self.gamma = 0.9
         self.EPOCH = 256
         self.actionvaluelossfunction = nn.MSELoss()
-        self.actionvalueoptim = torch.optim.Adam(self.valuenet.parameters(),lr = 0.001)
-        self.actionoptim = torch.optim.Adam(self.actionnet.parameters(),lr=0.001)
+        self.actionvalueoptim = torch.optim.Adam(self.valuenet.parameters(),lr = 0.0001)
+        self.actionoptim = torch.optim.Adam(self.actionnet.parameters(),lr=0.0001)
         self.lossindex = 1
         self.valueindex = 1
     def _soft_update(self,origin_net:nn.Module,target_net:nn.Module):
@@ -44,6 +44,10 @@ class DDPG(object):
             state = self.trainenv.reset()
             while done == False:
                 action = self.actionnet(state).cpu().detach().numpy()
+                # print("action is",action)
+                NOISE = 0.1
+                action = np.clip(np.random.normal(action,NOISE),-1,1)
+                # exit()
                 ns,r,done,_ = self.trainenv.step(action)
                 self.replay_buffer.push_memory(state,action,r,ns)
                 state = ns
