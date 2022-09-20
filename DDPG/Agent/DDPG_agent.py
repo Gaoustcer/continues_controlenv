@@ -13,7 +13,8 @@ class DDPG(object):
         self.targetactionnet = targetactionnet
         self.trainenv = make_env()
         self.testenv = make_env()
-        self.writer = SummaryWriter(logdir)
+        self.NOISE = 0.4
+        self.writer = SummaryWriter(logdir+str(self.NOISE))
         self.tau = 0.1
         self.gamma = 0.9
         self.EPOCH = 256
@@ -38,15 +39,15 @@ class DDPG(object):
                 reward += r
         return reward/K
 
-    def collectdataforkeposide(self,K=4):
+    def collectdataforkeposide(self,K=4,noise_times = 1):
         for epoch in range(K):
             done = False
             state = self.trainenv.reset()
             while done == False:
                 action = self.actionnet(state).cpu().detach().numpy()
                 # print("action is",action)
-                NOISE = 0.1
-                action = np.clip(np.random.normal(action,NOISE),-1,1)
+                # NOISE = 0.1
+                action = np.clip(np.random.normal(action,self.NOISE/noise_times),-1,1)
                 # exit()
                 ns,r,done,_ = self.trainenv.step(action)
                 self.replay_buffer.push_memory(state,action,r,ns)
@@ -89,7 +90,7 @@ class DDPG(object):
     
     def _random(self):
         from tqdm import tqdm
-        self.baselinewriter = SummaryWriter("../log/baseline")
+        self.baselinewriter = SummaryWriter("../log/mazebaseline")
         for epoch in tqdm(range(self.EPOCH)):
             reward = self.validation()
             self.baselinewriter.add_scalar('reward',reward,epoch)
@@ -100,7 +101,7 @@ class DDPG(object):
             self.collectdataforkeposide()
         from tqdm import tqdm
         for epoch in tqdm(range(self.EPOCH)):
-            self.collectdataforkeposide(K=2)
+            self.collectdataforkeposide(K=2,noise_times = epoch//16+1)
             for _ in range(sample_time):
                 self.updateparameters()
             reward = self.validation()
