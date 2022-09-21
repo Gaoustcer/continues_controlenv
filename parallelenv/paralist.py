@@ -1,17 +1,24 @@
-import multiprocessing
+import multiprocessing as mp 
+
 from time import time
-arr = []
-N = 1024 * 1024 * 1024
-def _add_element():
+# arr = []
+# N = 1024 * 1024 * 60
+def _add_element(arr,index,dict):
+    # global arr
+    # global N
+    N = 1024 ** 2 * 60
+    dict[index] = []
     for i in range(N):
-        arr.append(i**0.01)
+        dict[index].append(i**0.01)
+    print("call finished",len(arr))
 
 def para():
     processlist = []
     N = 5
-    
-    for _ in range(N):
-        processlist.append(multiprocessing.Process(target=_add_element))
+    arr = []
+    dic = mp.Manager().dict()
+    for i in range(N):
+        processlist.append(mp.Process(target=_add_element,args=(arr,i,dic)))
     start = time()
     for i in range(N):
         processlist[i].start()
@@ -28,4 +35,5 @@ def cpunopar():
     print("Time is",end - start,len(arr))
 
 if __name__ == "__main__":
-    cpunopar()
+    # cpunopar()
+    para()
